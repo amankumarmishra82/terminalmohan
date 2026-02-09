@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mohan :: Hacker Terminal Portfolio</title>
+
+<style>
+:root{--g:#00ff9c}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#000;
+  color:var(--g);
+  font-family:Consolas,monospace;
+}
+.wrap{max-width:1000px;margin:auto;padding:20px}
+.terminal{
+  border:1px solid #0f3;
+  border-radius:12px;
+  box-shadow:0 0 40px rgba(0,255,156,.35);
+  overflow:hidden;
+}
+.bar{background:#020;padding:10px;display:flex;gap:8px}
+.dot{width:12px;height:12px;border-radius:50%}
+.r{background:#ff5f56}.y{background:#ffbd2e}.g{background:#27c93f}
+.screen{
+  padding:18px;
+  min-height:70vh;
+  background:linear-gradient(180deg,#000,#020);
+}
+.line{margin:6px 0;white-space:pre-wrap}
+.prompt{color:#7cffcb}
+.cmd{color:#fff}
+.out{margin-left:18px}
+.input{display:flex;gap:8px}
+input{
+  flex:1;
+  background:transparent;
+  border:none;
+  outline:none;
+  color:#fff;
+  font-family:inherit;
+}
+
+/* Modal */
+.modal{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.9);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.card{
+  background:#010;
+  padding:20px;
+  border-radius:16px;
+  border:1px solid #0f3;
+}
+.photo{
+  width:260px;
+  border-radius:12px;
+  border:2px solid #0f3;
+}
+.btn{
+  margin-top:12px;
+  padding:8px 16px;
+  background:#0f3;
+  border:none;
+  border-radius:20px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+/* Matrix */
+canvas{position:fixed;inset:0;z-index:-1}
+</style>
+</head>
+
+<body>
+<canvas id="matrix"></canvas>
+
+<div class="wrap">
+  <div class="terminal">
+    <div class="bar">
+      <span class="dot r"></span>
+      <span class="dot y"></span>
+      <span class="dot g"></span>
+    </div>
+    <div class="screen" id="screen"></div>
+  </div>
+</div>
+
+<!-- Photo Modal -->
+<div class="modal" id="photoModal">
+  <div class="card">
+    <img src="Upload photo.jpg" class="photo">
+    <button class="btn" onclick="togglePhoto(false)">Close</button>
+  </div>
+</div>
+
+<script>
+/* ===== MATRIX ===== */
+const canvas=document.getElementById("matrix");
+const ctx=canvas.getContext("2d");
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight}
+resize();addEventListener("resize",resize);
+
+const chars="01MOHANPYTHONHACKER";
+const fontSize=16;
+let drops=Array(Math.floor(canvas.width/fontSize)).fill(1);
+let matrixOn=true;
+
+setInterval(()=>{
+  if(!matrixOn)return;
+  ctx.fillStyle="rgba(0,0,0,.1)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="#00ff9c";
+  ctx.font=fontSize+"px monospace";
+  drops.forEach((y,i)=>{
+    ctx.fillText(chars[Math.random()*chars.length|0],i*fontSize,y*fontSize);
+    if(y*fontSize>canvas.height && Math.random()>.98)drops[i]=0;
+    drops[i]++;
+  });
+},50);
+
+/* ===== TERMINAL ===== */
+const screen=document.getElementById("screen");
+
+function print(t,c="line"){
+  const d=document.createElement("div");
+  d.className=c; d.innerHTML=t;
+  screen.appendChild(d);
+  screen.scrollTop=screen.scrollHeight;
+}
+
+function prompt(){
+  const d=document.createElement("div");
+  d.className="input line";
+  d.innerHTML=`<span class="prompt">user@mohan:~$</span><input autofocus>`;
+  screen.appendChild(d);
+  const i=d.querySelector("input");
+  i.focus();
+  i.onkeydown=e=>{
+    if(e.key==="Enter"){
+      const v=i.value.trim();
+      d.remove();
+      handle(v);
+    }
+  }
+}
+
+/* ===== PDF CONFIG (ADD PDFs HERE ONLY) ===== */
+const pdfs={
+  "resume":"resume.pdf",
+  "os":"os.pdf",
+  "certificate":"certificate.pdf",
+  "marksheet":"marksheet.pdf",
+  "offerletter":"offerletter.pdf"
+};
+
+/* ===== COMMANDS ===== */
+function help(){
+print(`Commands:
+ help
+ whoami
+ skills
+ projects
+ contact
+ photo
+ listpdf
+ resume / os / certificate / marksheet / offerletter
+ matrix on|off
+ clear`,"out");
+}
+
+function whoami(){print("Mohan — Python Developer | Automation | Web","out")}
+function skills(){print("Python, Flask, Automation, Web Scraping, Git, Linux","out")}
+function projects(){print("• Voice Assistant\n• WhatsApp Automation\n• Blockchain Demo","out")}
+function contact(){print("Email: youremail@gmail.com\nGitHub: github.com/yourname","out")}
+
+function listpdf(){
+  print("Available PDFs:","out");
+  Object.keys(pdfs).forEach(p=>print("• "+p,"out"));
+}
+
+function togglePhoto(s){
+  document.getElementById("photoModal").style.display=s?"flex":"none";
+}
+
+function clear(){screen.innerHTML=""}
+function matrix(arg){matrixOn=(arg==="on")}
+
+function handle(cmd){
+  print(`<span class="prompt">user@mohan:~$</span> <span class="cmd">${cmd}</span>`);
+
+  /* ✅ ABSOLUTE PATH FIX HERE */
+  if(pdfs[cmd]){
+    window.open("/pdf/"+pdfs[cmd],"_blank");
+    print("Downloading "+pdfs[cmd]+" ...","out");
+    prompt();
+    return;
+  }
+
+  const [c,a]=cmd.split(" ");
+  switch(c){
+    case "help":help();break;
+    case "whoami":whoami();break;
+    case "skills":skills();break;
+    case "projects":projects();break;
+    case "contact":contact();break;
+    case "photo":togglePhoto(true);break;
+    case "listpdf":listpdf();break;
+    case "matrix":matrix(a);break;
+    case "clear":clear();break;
+    default:print("Command not found. Type help","out");
+  } 
+  prompt();
+}
+
+/* ===== BOOT ===== */
+print("ACCESSING MOHAN SYSTEM...");
+setTimeout(()=>{
+  print("Type help to begin","out");
+  prompt();
+},700);
+</script> 
+</body>
+</html>
